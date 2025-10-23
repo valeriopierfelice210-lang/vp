@@ -1,0 +1,135 @@
+import datetime
+
+class Turno:
+    def __init__(self, nome, inizio, fine, modificabile=True, spezzato=False):
+        self.nome = nome
+        self.inizio = inizio  # datetime.time
+        self.fine = fine      # datetime.time
+        self.modificabile = modificabile
+        self.spezzato = spezzato
+
+    def __repr__(self):
+        mod = "Modificabile" if self.modificabile else "Non Modificabile"
+        return f"{self.nome}: {self.inizio.strftime('%H:%M')} - {self.fine.strftime('%H:%M')} ({mod})"
+
+class Lavoratore:
+    def __init__(self, nome):
+        self.nome = nome
+
+    def __repr__(self):
+        return self.nome
+
+class Pianificazione:
+    def __init__(self):
+        self.turni = [
+            Turno("Mattina", datetime.time(6,30), datetime.time(14,0), modificabile=True),
+            Turno("Pomeriggio", datetime.time(14,0), datetime.time(21,0), modificabile=True),
+            Turno("Intermedio", datetime.time(9,30), datetime.time(16,0), modificabile=True),
+            Turno("Spezzato", datetime.time(8,0), datetime.time(12,0), modificabile=True, spezzato=True)
+        ]
+        self.lavoratori = []
+        self.assegnazioni = {}  # {lavoratore: turno}
+
+    def modifica_turno(self, nome_turno, nuovo_inizio, nuovo_fine):
+        for t in self.turni:
+            if t.nome.lower() == nome_turno.lower():
+                t.inizio = nuovo_inizio
+                t.fine = nuovo_fine
+                print(f"Turno {t.nome} modificato: {t}")
+                return
+        print("Turno non trovato.")
+
+    def aggiungi_lavoratore(self, lavoratore):
+        self.lavoratori.append(lavoratore)
+
+    def rimuovi_lavoratore(self, nome):
+        self.lavoratori = [l for l in self.lavoratori if l.nome != nome]
+        if nome in self.assegnazioni:
+            del self.assegnazioni[nome]
+
+    def visualizza_turni(self):
+        print("Turni disponibili:")
+        for t in self.turni:
+            print(f"- {t}")
+
+    def visualizza_lavoratori(self):
+        print("Lavoratori:")
+        for i, l in enumerate(self.lavoratori):
+            print(f"{i+1}. {l}")
+
+    def auto_assegna(self):
+        self.assegnazioni = {}
+        n = len(self.lavoratori)
+        if n == 0:
+            print("Nessun lavoratore.")
+            return
+        for idx, lav in enumerate(self.lavoratori):
+            turno = self.turni[idx % len(self.turni)]
+            self.assegnazioni[lav.nome] = turno
+        print("Assegnazione automatica completata.")
+
+    def assegna_manual(self, nome_lavoratore, nome_turno):
+        lav = next((l for l in self.lavoratori if l.nome == nome_lavoratore), None)
+        turno = next((t for t in self.turni if t.nome.lower() == nome_turno.lower()), None)
+        if lav and turno:
+            self.assegnazioni[lav.nome] = turno
+            print(f"Assegnato {turno.nome} a {lav.nome}")
+        else:
+            print("Nome lavoratore o turno non valido.")
+
+    def mostra_assegnazioni(self):
+        print("\nAssegnazione turni:")
+        for lav, turno in self.assegnazioni.items():
+            print(f"{lav}: {turno}")
+
+def menu():
+    p = Pianificazione()
+    while True:
+        print("\n--- MENU ---")
+        print("1. Aggiungi lavoratore")
+        print("2. Rimuovi lavoratore")
+        print("3. Visualizza lavoratori")
+        print("4. Visualizza turni")
+        print("5. Modifica orari turno")
+        print("6. Assegna turni automaticamente")
+        print("7. Assegna turno manualmente")
+        print("8. Mostra assegnazioni")
+        print("9. Esci")
+        scelta = input("Scegli: ")
+
+        if scelta == "1":
+            nome = input("Nome lavoratore: ")
+            p.aggiungi_lavoratore(Lavoratore(nome))
+        elif scelta == "2":
+            nome = input("Nome lavoratore da rimuovere: ")
+            p.rimuovi_lavoratore(nome)
+        elif scelta == "3":
+            p.visualizza_lavoratori()
+        elif scelta == "4":
+            p.visualizza_turni()
+        elif scelta == "5":
+            turno = input("Nome turno da modificare: ")
+            inizio = input("Nuovo inizio (HH:MM): ")
+            fine = input("Nuova fine (HH:MM): ")
+            try:
+                hh1, mm1 = map(int, inizio.split(":"))
+                hh2, mm2 = map(int, fine.split(":"))
+                p.modifica_turno(turno, datetime.time(hh1, mm1), datetime.time(hh2, mm2))
+            except:
+                print("Formato orario non valido.")
+        elif scelta == "6":
+            p.auto_assegna()
+        elif scelta == "7":
+            nome_lav = input("Nome lavoratore: ")
+            nome_turno = input("Nome turno: ")
+            p.assegna_manual(nome_lav, nome_turno)
+        elif scelta == "8":
+            p.mostra_assegnazioni()
+        elif scelta == "9":
+            print("Ciao!")
+            break
+        else:
+            print("Scelta non valida.")
+
+if __name__ == "__main__":
+    menu()
